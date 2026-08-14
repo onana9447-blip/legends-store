@@ -13,8 +13,8 @@
 // ============================================================
 
 const SHEET_NAME = "Orders";
-const SECRET = "CHANGE_ME";            // <- clé privée (lecture / suppression)
-const WRITE_KEY = "WRITE_CHANGE_ME";   // <- clé publique (écriture seule)
+const SECRET = "LgAdmin$9q2Xz!2026";        // <- clé privée (lecture / suppression) — admin la tape
+const WRITE_KEY = "legendsWritePub2026";    // <- clé publique (écriture seule) — va dans script.js
 
 function doGet(e) {
   if (e.parameter.key === SECRET) return json({ orders: readOrders() });

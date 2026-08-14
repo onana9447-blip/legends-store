@@ -28,7 +28,7 @@ let cart = JSON.parse(localStorage.getItem("legends-cart") || "[]");
 // 2) Collez l'URL déployée dans BACKEND_URL et la clé WRITE_KEY (publique) dans BACKEND_WRITE_KEY.
 //    La clé SECRET (lecture) reste côté admin et n'est JAMAIS écrite ici.
 const BACKEND_URL = "";
-const BACKEND_WRITE_KEY = "";
+const BACKEND_WRITE_KEY = "legendsWritePub2026";
 
 // ===== LIVRAISON WHATSAPP =====
 // Numéro du store au format international SANS "+" ni espaces (ex: 212702938680).
