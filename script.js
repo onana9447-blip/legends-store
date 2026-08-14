@@ -25,9 +25,10 @@ let cart = JSON.parse(localStorage.getItem("legends-cart") || "[]");
 // ===== BACKEND (optionnel) =====
 // Pour recevoir les commandes depuis n'importe quel PC client :
 // 1) Copiez le contenu de "apps-script.js" dans https://script.google.com, déployez en Web App.
-// 2) Collez l'URL déployée dans BACKEND_URL et la même clé dans BACKEND_KEY.
+// 2) Collez l'URL déployée dans BACKEND_URL et la clé WRITE_KEY (publique) dans BACKEND_WRITE_KEY.
+//    La clé SECRET (lecture) reste côté admin et n'est JAMAIS écrite ici.
 const BACKEND_URL = "";
-const BACKEND_KEY = "";
+const BACKEND_WRITE_KEY = "";
 
 const grid = document.getElementById("productGrid");
 const cartCount = document.getElementById("cartCount");
@@ -125,16 +126,12 @@ document.getElementById("checkoutForm").addEventListener("submit",e=>{
     items:cart.map(i=>({name:i.name,price:i.price,qty:i.qty,mark:i.mark})),
     total:cart.reduce((s,i)=>s+i.price*i.qty,0)
   };
-  const orders=JSON.parse(localStorage.getItem("legends-orders")||"[]");
-  orders.unshift(order);
-  localStorage.setItem("legends-orders",JSON.stringify(orders));
-
   if (BACKEND_URL) {
     fetch(BACKEND_URL, {
       method: "POST",
       mode: "cors",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: BACKEND_KEY, order })
+      body: JSON.stringify({ key: BACKEND_WRITE_KEY, order })
     }).catch(() => {});
   }
 

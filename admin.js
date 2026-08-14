@@ -1,38 +1,62 @@
-const ADMIN_PASS = "admin123";
-const BACKEND_URL = "";
-const BACKEND_KEY = "";
+const ADMIN_PASS = "admin123"; // utilisé uniquement en mode local (sans backend)
+const BACKEND_URL = "";        // collez l'URL du Web App ici
 
 const gate = document.getElementById("gate");
 const app = document.getElementById("app");
 const passInput = document.getElementById("passInput");
 const gateErr = document.getElementById("gateErr");
 
-function unlock() {
+let readKey = "";
+
+function money(n) { return `${Number(n).toLocaleString("en-US")} MAD`; }
+
+async function unlock() {
   const val = passInput.value.trim();
-  if (val === ADMIN_PASS) {
-    gate.style.display = "none";
-    app.hidden = false;
-    render();
-  } else {
-    gateErr.textContent = "Code incorrect.";
-    passInput.value = "";
+  if (!val) { gateErr.textContent = "Entrez la clé."; return; }
+
+  if (!BACKEND_URL) {
+    if (val === ADMIN_PASS) { openApp(); render(); }
+    else gateErr.textContent = "Code incorrect.";
+    return;
   }
+
+  try {
+    const r = await fetch(BACKEND_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "read", key: val })
+    });
+    const d = await r.json();
+    if (Array.isArray(d.orders)) {
+      readKey = val;
+      openApp();
+      render();
+    } else {
+      gateErr.textContent = "Clé incorrecte ou accès refusé.";
+    }
+  } catch {
+    gateErr.textContent = "Erreur de connexion au backend.";
+  }
+}
+
+function openApp() {
+  gate.style.display = "none";
+  app.hidden = false;
 }
 
 document.getElementById("gateBtn").addEventListener("click", unlock);
 passInput.addEventListener("keydown", e => { if (e.key === "Enter") unlock(); });
 
-function money(n) { return `${Number(n).toLocaleString("en-US")} MAD`; }
-
-function loadLocalOrders() {
-  try { return JSON.parse(localStorage.getItem("legends-orders") || "[]"); }
-  catch { return []; }
-}
-
-async function loadBackendOrders() {
+async function backendRead() {
   if (!BACKEND_URL) return [];
   try {
-    const r = await fetch(`${BACKEND_URL}?key=${encodeURIComponent(BACKEND_KEY)}`, { mode: "cors" });
+    const r = await fetch(BACKEND_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "read", key: readKey })
+    });
     const d = await r.json();
     return Array.isArray(d.orders) ? d.orders : [];
   } catch {
@@ -40,18 +64,11 @@ async function loadBackendOrders() {
   }
 }
 
-function mergeOrders(local, backend) {
-  const byId = new Map();
-  [...backend, ...local].forEach(o => { if (o && o.id) byId.set(o.id, o); });
-  return [...byId.values()].sort((a, b) => (b.id || 0) - (a.id || 0));
-}
-
 async function render() {
   const ordersEl = document.getElementById("orders");
   ordersEl.innerHTML = `<div class="empty">Chargement…</div>`;
 
-  const [local, backend] = await Promise.all([loadLocalOrders(), loadBackendOrders()]);
-  const orders = mergeOrders(local, backend);
+  const orders = (await backendRead()).sort((a, b) => (b.id || 0) - (a.id || 0));
 
   const revenue = orders.reduce((s, o) => s + (o.total || 0), 0);
   document.getElementById("statCount").textContent = orders.length;
@@ -88,27 +105,39 @@ async function render() {
           <div class="total">${money(o.total)}</div>
           <div style="display:flex;gap:8px;align-items:center">
             <span class="pay">${o.customer?.payment || "-"}</span>
-            <button class="btn-danger" data-del="${o.id}">Supprimer (local)</button>
+            <button class="btn-danger" data-del="${o.id}">Supprimer</button>
           </div>
         </div>
       </div>`;
   }).join("");
 }
 
-document.getElementById("orders").addEventListener("click", e => {
+document.getElementById("orders").addEventListener("click", async e => {
   const del = e.target.closest("[data-del]");
   if (!del) return;
   const id = Number(del.dataset.del);
-  const orders = loadLocalOrders().filter(o => o.id !== id);
-  localStorage.setItem("legends-orders", JSON.stringify(orders));
+  if (BACKEND_URL) {
+    await fetch(BACKEND_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", key: readKey, id })
+    });
+  }
   render();
 });
 
 document.getElementById("refreshBtn").addEventListener("click", render);
 
-document.getElementById("clearBtn").addEventListener("click", () => {
-  if (confirm("Supprimer toutes les commandes locales ? (Le backend n'est pas affecté)")) {
-    localStorage.removeItem("legends-orders");
-    render();
+document.getElementById("clearBtn").addEventListener("click", async () => {
+  if (!confirm("Supprimer toutes les commandes ?")) return;
+  if (BACKEND_URL) {
+    await fetch(BACKEND_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "clear", key: readKey })
+    });
   }
+  render();
 });
