@@ -64,11 +64,19 @@ async function backendRead() {
   }
 }
 
+function loadLocalOrders() {
+  try { return JSON.parse(localStorage.getItem("legends-orders") || "[]"); }
+  catch { return []; }
+}
+
 async function render() {
   const ordersEl = document.getElementById("orders");
   ordersEl.innerHTML = `<div class="empty">Chargement…</div>`;
 
-  const orders = (await backendRead()).sort((a, b) => (b.id || 0) - (a.id || 0));
+  const [local, backend] = await Promise.all([loadLocalOrders(), backendRead()]);
+  const byId = new Map();
+  [...backend, ...local].forEach(o => { if (o && o.id) byId.set(o.id, o); });
+  const orders = [...byId.values()].sort((a, b) => (b.id || 0) - (a.id || 0));
 
   const revenue = orders.reduce((s, o) => s + (o.total || 0), 0);
   document.getElementById("statCount").textContent = orders.length;

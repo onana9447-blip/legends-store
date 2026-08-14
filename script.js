@@ -30,6 +30,25 @@ let cart = JSON.parse(localStorage.getItem("legends-cart") || "[]");
 const BACKEND_URL = "";
 const BACKEND_WRITE_KEY = "";
 
+// ===== LIVRAISON WHATSAPP =====
+// Numéro du store au format international SANS "+" ni espaces (ex: 212702938680).
+// Au "Confirmer", WhatsApp s'ouvre avec la commande pré-remplie ; le client envoie.
+const WHATSAPP_NUMBER = "212702938680"; // 07 02 93 86 80
+
+function buildWhatsAppMessage(o) {
+  const lines = [
+    "🛒 *NOUVELLE COMMANDE — LEGENDS*",
+    "Nom : " + (o.customer.name || "-"),
+    "Tél : " + (o.customer.phone || "-"),
+    "Adresse : " + (o.customer.address || "-"),
+    "Paiement : " + (o.customer.payment || "-"),
+    "---------------------------"
+  ];
+  (o.items || []).forEach(i => lines.push("• " + i.name + " ×" + i.qty + "  (" + i.price + " MAD)"));
+  lines.push("👉 Total : " + o.total + " MAD");
+  return lines.join("\n");
+}
+
 const grid = document.getElementById("productGrid");
 const cartCount = document.getElementById("cartCount");
 const cartItems = document.getElementById("cartItems");
@@ -126,6 +145,10 @@ document.getElementById("checkoutForm").addEventListener("submit",e=>{
     items:cart.map(i=>({name:i.name,price:i.price,qty:i.qty,mark:i.mark})),
     total:cart.reduce((s,i)=>s+i.price*i.qty,0)
   };
+  const local = JSON.parse(localStorage.getItem("legends-orders") || "[]");
+  local.unshift(order);
+  localStorage.setItem("legends-orders", JSON.stringify(local));
+
   if (BACKEND_URL) {
     fetch(BACKEND_URL, {
       method: "POST",
@@ -135,7 +158,12 @@ document.getElementById("checkoutForm").addEventListener("submit",e=>{
     }).catch(() => {});
   }
 
-  document.getElementById("checkoutNote").textContent="Order received! We will contact you to confirm delivery and payment.";
+  if (WHATSAPP_NUMBER) {
+    const url = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(buildWhatsAppMessage(order));
+    window.open(url, "_blank");
+  }
+
+  document.getElementById("checkoutNote").textContent = "Commande prête — envoyez-la sur WhatsApp pour confirmer ✅";
   cart=[]; saveCart();
   setTimeout(()=>{modal.classList.remove("open");closeCart();e.target.reset();document.getElementById("checkoutNote").textContent=""},1800);
 });
