@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LEGENDS — Admin · Orders</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0c0d10;--panel:#15171c;--line:#262a32;--text:#eef1f5;--muted:#9aa3b0;--accent:#e23b3b;--ok:#2ecc71}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+    .wrap{max-width:980px;margin:0 auto;padding:28px 20px 80px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+    .brand{font-family:Oswald,sans-serif;font-size:26px;letter-spacing:.5px}
+    .brand span{color:var(--accent)}
+    .stats{display:flex;gap:14px;flex-wrap:wrap}
+    .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-width:120px}
+    .stat b{display:block;font-family:Oswald,sans-serif;font-size:24px}
+    .stat small{color:var(--muted)}
+    .toolbar{display:flex;gap:10px;margin:18px 0;flex-wrap:wrap}
+    button{cursor:pointer;font-family:inherit;border:none;border-radius:9px;padding:9px 14px;font-weight:600}
+    .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+    .btn-danger{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+    .order{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+    .order-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+    .order-id{color:var(--muted);font-size:13px}
+    .order-date{color:var(--muted);font-size:13px}
+    .cust{margin:10px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px 18px}
+    .cust div small{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+    .items{margin:12px 0 6px;border-top:1px dashed var(--line);padding-top:10px}
+    .item{display:flex;justify-content:space-between;gap:10px;padding:4px 0;color:var(--text)}
+    .item span:last-child{color:var(--muted);white-space:nowrap}
+    .order-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:10px}
+    .total{font-family:Oswald,sans-serif;font-size:20px}
+    .pay{font-size:12px;background:#1f2228;border:1px solid var(--line);padding:4px 9px;border-radius:999px;color:var(--muted)}
+    .empty{text-align:center;color:var(--muted);padding:60px 0}
+    .gate{position:fixed;inset:0;background:rgba(8,9,11,.96);display:flex;align-items:center;justify-content:center;z-index:50}
+    .gate-box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;width:min(360px,90vw);text-align:center}
+    .gate-box h2{font-family:Oswald,sans-serif;margin:0 0 6px}
+    .gate-box p{color:var(--muted);margin:0 0 16px;font-size:14px}
+    .gate-box input{width:100%;padding:11px 12px;border-radius:9px;border:1px solid var(--line);background:#0e1014;color:var(--text);font-size:16px;margin-bottom:12px}
+    .gate-box button{width:100%;background:var(--accent);color:#fff}
+    .err{color:var(--accent);font-size:13px;min-height:18px;margin-bottom:8px}
+    .badge{font-size:11px;color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:2px 8px}
+  </style>
+</head>
+<body>
+  <div class="gate" id="gate">
+    <div class="gate-box">
+      <h2>ADMIN ACCESS</h2>
+      <p>Entrez le code pour voir les commandes.</p>
+      <input id="passInput" type="password" placeholder="Code admin" autocomplete="off">
+      <div class="err" id="gateErr"></div>
+      <button id="gateBtn">Entrer</button>
+    </div>
+  </div>
+
+  <div class="wrap" id="app" hidden>
+    <header>
+      <div class="brand">LEG<span>ENDS</span> · Admin</div>
+      <div class="stats">
+        <div class="stat"><b id="statCount">0</b><small>Commandes</small></div>
+        <div class="stat"><b id="statRevenue">0 MAD</b><small>Revenu total</small></div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <button class="btn-ghost" id="refreshBtn">Actualiser</button>
+      <button class="btn-danger" id="clearBtn">Tout supprimer (local)</button>
+    </div>
+
+    <div id="orders"></div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

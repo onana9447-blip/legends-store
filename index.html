@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LEGENDS — premium football jerseys inspired by the greatest players and clubs.">
+  <title> +99— Football Jerseys</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="announcement">FREE SHIPPING ON ORDERS OVER 700 MAD · SECURE PAYMENT · EASY RETURNS</div>
+
+  <header class="site-header">
+    <a class="logo" href="#home" aria-label="Legends home">
+      <span class="logo-mark">99</span>
+      <span>+</span>
+    </a>
+
+    <button class="menu-toggle" aria-label="Open menu" aria-expanded="false">☰</button>
+
+    <nav class="nav" id="nav">
+      <a href="#home">Home</a>
+      <a href="#collection">Collection</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+      <button class="cart-button" id="cartBtn" aria-label="Open shopping cart">
+        Cart <span id="cartCount">0</span>
+      </button>
+    </nav>
+  </header>
+
+  <main id="home">
+    <section class="hero gallery-hero" aria-label="Featured football jerseys gallery">
+      <div class="gallery-wall">
+        <div class="gallery-row row-top">
+          
+
+       
+      </div>
+    </section>
+
+    <section class="ticker" aria-label="Store highlights">
+      <span>MESSI</span><i>✦</i><span>RONALDO</span><i>✦</i><span>CLASSICS</span><i>✦</i><span>LEGENDS</span><i>✦</i><span>MESSI</span>
+    </section>
+
+    <section class="section collection-section" id="collection">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">SHOP THE DROP</p>
+          <h2>THE COLLECTION</h2>
+        </div>
+        <p class="section-intro">Premium-inspired jerseys for the players, clubs and eras that made football unforgettable.</p>
+      </div>
+
+      <div class="filters">
+        <button class="filter active" data-filter="all">All</button>
+        <button class="filter" data-filter="classic">Classic</button>
+        <button class="filter" data-filter="club">Club</button>
+        <button class="filter" data-filter="player">Player</button>
+      </div>
+
+      <div class="product-grid" id="productGrid"></div>
+    </section>
+
+    <section class="manifesto" id="about">
+      <div class="manifesto-number">02</div>
+      <div>
+        <p class="eyebrow">WHY LEGENDS?</p>
+        <h2>FOOTBALL IS<br><span>MORE THAN A SHIRT.</span></h2>
+      </div>
+      <p>We create a place for fans to wear their favorite memories. From legendary players to unforgettable kits, every piece is selected for its story, its style and its place in football history.</p>
+    </section>
+
+    <section class="features">
+      <article><span>01</span><h3>QUALITY FIRST</h3><p>Comfortable materials, sharp details and a fit made for everyday wear.</p></article>
+      <article><span>02</span><h3>SECURE PAYMENT</h3><p>Simple checkout with secure payment options and order confirmation.</p></article>
+      <article><span>03</span><h3>FAST DELIVERY</h3><p>Tracked delivery across Morocco with support from order to arrival.</p></article>
+    </section>
+
+    <section class="contact section" id="contact">
+      <div class="contact-copy">
+        <p class="eyebrow">GET IN TOUCH</p>
+        <h2>LET'S TALK<br>FOOTBALL.</h2>
+        <p>Questions about a size, an order or the next drop? Send us a message and our team will get back to you.</p>
+        <div class="contact-details">
+          <a href="mailto:hello@legends-store.com">legends-store@gmail.com</a>
+          <a href="tel:+212600000000">+212 7 02 93 86 80</a>
+          <span>Morocco · Online store</span>
+        </div>
+      </div>
+      <form class="contact-form" id="contactForm">
+        <label>Name<input required type="text" name="name" placeholder="Your name"></label>
+        <label>Email<input required type="email" name="email" placeholder="you@email.com"></label>
+        <label>Message<textarea required name="message" rows="5" placeholder="How can we help?"></textarea></label>
+        <button class="btn btn-dark" type="submit">Send message ↗</button>
+        <p class="form-note" id="contactNote"></p>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-top">
+      <div>
+        <a class="logo footer-logo" href="#home"><span class="logo-mark">L</span><span>LEGENDS</span></a>
+        <p>Football jerseys for people who never forget the game.</p>
+      </div>
+      <div class="footer-col"><h4>SHOP</h4><a href="#collection">All jerseys</a><a href="#collection">Classic</a><a href="#collection">Player</a><a href="#collection">Club</a></div>
+      <div class="footer-col"><h4>HELP</h4><a href="#contact">Contact</a><a href="#">Shipping & delivery</a><a href="#">Returns</a><a href="#">Size guide</a></div>
+      <div class="footer-col"><h4>FOLLOW</h4><a href="#">Instagram</a><a href="#">TikTok</a><a href="#">Facebook</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 LEGENDS. All rights reserved.</span><span>Secure checkout · Privacy · Terms</span></div>
+  </footer>
+
+  <aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
+    <div class="cart-head"><h2>YOUR CART</h2><button id="closeCart" aria-label="Close cart">×</button></div>
+    <div class="cart-items" id="cartItems"><div class="empty-cart">Your cart is empty.<br><a href="#collection">Explore the collection →</a></div></div>
+    <div class="cart-footer">
+      <div class="subtotal"><span>Subtotal</span><strong id="cartTotal">0 MAD</strong></div>
+      <button class="btn btn-dark full" id="checkoutBtn">Proceed to payment</button>
+      <small>Secure checkout · Payment on confirmation</small>
+    </div>
+  </aside>
+  <div class="drawer-backdrop" id="backdrop"></div>
+
+  <div class="modal" id="checkoutModal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" id="closeModal">×</button>
+      <p class="eyebrow">CHECKOUT</p>
+      <h2>PAYMENT DETAILS</h2>
+      <form id="checkoutForm">
+        <div class="two"><label>Full name<input required name="name"></label><label>Phone<input required name="phone" type="tel"></label></div>
+        <label>Address<input required name="address" placeholder="City, street, building"></label>
+        <label>Payment method
+          <select name="payment"><option>Cash on delivery</option><option>Bank transfer</option><option>Card payment</option></select>
+        </label>
+        <div class="checkout-summary"><span>Order total</span><strong id="checkoutTotal">0 MAD</strong></div>
+        <button class="btn btn-dark full" type="submit">Confirm order</button>
+        <p class="form-note" id="checkoutNote"></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
