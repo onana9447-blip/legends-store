@@ -12,12 +12,12 @@ const products = [
 // Current football-shirt collection.
 products.length = 0;
 products.push(
-  {id:1,name:"Paris Saint-Germain Black Kit",meta:"Club Collection · 2025/26",price:199,category:"club",mark:"PSG",image:"image/psg-black-jersey.jpeg"},
-  {id:2,name:"AS Roma Home Kit",meta:"Club Collection · 2025/26",price:199,category:"club",mark:"ROMA",image:"image/roma-jersey.jpeg"},
-  {id:3,name:"Manchester United Home Kit",meta:"Club Collection · 2025/26",price:199,category:"club",mark:"MUFC",image:"image/man-utd-jersey.jpeg"},
-  {id:4,name:"FC Barcelona 1899 Anniversary Kit",meta:"Classic Collection · 1899–1999",price:199,category:"classic",mark:"FCB",image:"image/barcelona-1899-jersey.jpeg"},
-  {id:5,name:"FC Barcelona Pink Kit",meta:"Club Collection · 2025/26",price:199,category:"club",mark:"FCB",image:"image/barcelona-pink-jersey.jpeg"},
-  {id:6,name:"Real Madrid Home Kit",meta:"Club Collection · 2025/26",price:199,category:"club",mark:"RMA",image:"image/real-madrid-jersey.jpeg"}
+  {id:1,name:"Paris Saint-Germain Home 2025/26",meta:"Club Collection",price:199,oldPrice:249,rating:5,stock:7,category:"club",sizes:["S","M","L","XL","XXL"],delivery:"2–4 days",bestseller:true,image:"image/psg-black-jersey.jpeg"},
+  {id:2,name:"AS Roma Home 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL","XXL"],delivery:"2–4 days",bestseller:true,image:"image/roma-jersey.jpeg"},
+  {id:3,name:"Manchester United Home 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL","XXL"],delivery:"2–4 days",bestseller:true,image:"image/man-utd-jersey.jpeg"},
+  {id:4,name:"FC Barcelona 1899 Anniversary",meta:"Classic Collection · 1899–1999",price:199,rating:5,stock:5,category:"classic",sizes:["S","M","L","XL","XXL"],delivery:"3–5 days",limited:true,image:"image/barcelona-1899-jersey.jpeg"},
+  {id:5,name:"FC Barcelona Pink 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL","XXL"],delivery:"2–4 days",bestseller:true,limited:true,image:"image/barcelona-pink-jersey.jpeg"},
+  {id:6,name:"Real Madrid Home 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL","XXL"],delivery:"2–4 days",bestseller:true,image:"image/real-madrid-jersey.jpeg"}
 );
 
 let cart = JSON.parse(localStorage.getItem("legends-cart") || "[]");
@@ -57,17 +57,47 @@ const checkoutTotal = document.getElementById("checkoutTotal");
 
 function money(n){ return `${n.toLocaleString("en-US")} MAD`; }
 
-function renderProducts(filter="all"){
-  grid.innerHTML = products.filter(p => filter==="all" || p.category===filter).map(p => `
-    <article class="product-card">
-      <div class="product-visual"><img src="${p.image}" alt="${p.name}"></div>
-      <div class="product-info">
-        <div><div class="product-name">${p.name}</div><div class="product-meta">${p.meta}</div></div>
-        <div class="product-price">${money(p.price)}</div>
+function stars(n){ n = n || 5; return "★".repeat(n) + "☆".repeat(5 - n); }
+
+function buildCard(p){
+  const sizes = (p.sizes || ["S","M","L","XL"]).map((s,i)=>`<button class="size${i===1?" active":""}" data-size="${s}">${s}</button>`).join("");
+  return `
+  <article class="product-card" data-id="${p.id}">
+    ${p.stock ? `<div class="stock-badge">🔥 Only ${p.stock} pieces left</div>` : ""}
+    <div class="product-visual"><img src="${p.image}" alt="${p.name}" loading="lazy"></div>
+    <div class="product-body">
+      <div class="product-top">
+        <h3 class="product-name">${p.name}</h3>
+        <div class="stars" title="${p.rating||5}/5">${stars(p.rating)}</div>
       </div>
-      <button class="add-cart" data-add="${p.id}">Add to cart +</button>
-    </article>
-  `).join("");
+      <div class="product-price">
+        <span class="price-now">${money(p.price)}</span>
+        ${p.oldPrice ? `<span class="price-old">${money(p.oldPrice)}</span>` : ""}
+      </div>
+      <div class="opt">
+        <div class="opt-label">Sizes</div>
+        <div class="sizes">${sizes}</div>
+      </div>
+      <div class="opt">
+        <div class="opt-label">Player</div>
+        <select class="player"><option>No name</option><option>Custom name</option></select>
+      </div>
+      <div class="meta-lines">
+        <span>🚚 Delivery: ${p.delivery||"2–4 days"}</span>
+        <span>💳 Payment: Cash on Delivery</span>
+      </div>
+      <div class="card-actions">
+        <button class="add-cart" data-add="${p.id}">Add to cart +</button>
+        <button class="buy-now" data-buy="${p.id}">BUY NOW</button>
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderGrid(el, list){ if(el) el.innerHTML = list.map(buildCard).join(""); }
+
+function renderProducts(filter="all"){
+  renderGrid(grid, products.filter(p => filter==="all" || p.category===filter));
 }
 
 function saveCart(){ localStorage.setItem("legends-cart", JSON.stringify(cart)); renderCart(); }
@@ -86,33 +116,49 @@ function renderCart(){
   cartItems.innerHTML = cart.map(i => `
     <div class="cart-row">
       <div class="cart-thumb"><img src="${i.image}" alt=""></div>
-      <div><h4>${i.name}</h4><p>${money(i.price)}</p>
+      <div><h4>${i.name}</h4><p>${money(i.price)} · ${i.size||""}${i.player && i.player!=="No name" ? " · "+i.player : ""}</p>
         <div class="qty">
-          <button data-minus="${i.id}">−</button><span>${i.qty}</span><button data-plus="${i.id}">+</button>
+          <button data-minus="${i.id}" data-size="${i.size||""}" data-player="${i.player||""}">−</button><span>${i.qty}</span><button data-plus="${i.id}" data-size="${i.size||""}" data-player="${i.player||""}">+</button>
         </div>
       </div>
-      <button class="remove" data-remove="${i.id}">Remove</button>
+      <button class="remove" data-remove="${i.id}" data-size="${i.size||""}" data-player="${i.player||""}">Remove</button>
     </div>
   `).join("");
 }
 
 document.addEventListener("click", e => {
+  const sizeBtn = e.target.closest(".size");
+  if(sizeBtn){
+    const card = sizeBtn.closest(".product-card");
+    card.querySelectorAll(".size").forEach(b=>b.classList.remove("active"));
+    sizeBtn.classList.add("active");
+    return;
+  }
   const add = e.target.closest("[data-add]");
-  if(add){
-    const p = products.find(x=>x.id===Number(add.dataset.add));
-    const existing = cart.find(x=>x.id===p.id);
-    existing ? existing.qty++ : cart.push({...p,qty:1});
+  const buy = e.target.closest("[data-buy]");
+  if(add || buy){
+    const card = (add || buy).closest(".product-card");
+    const id = Number((add || buy).dataset.add || (add || buy).dataset.buy);
+    const p = products.find(x=>x.id===id);
+    const sizeEl = card.querySelector(".size.active") || card.querySelector(".size");
+    const size = sizeEl ? sizeEl.dataset.size : "";
+    const player = card.querySelector(".player").value;
+    const existing = cart.find(x=>x.id===p.id && x.size===size && x.player===player);
+    if(existing) existing.qty++; else cart.push({...p, qty:1, size, player});
     saveCart(); openCart();
+    if(buy){ modal.classList.add("open"); modal.setAttribute("aria-hidden","false"); }
+    return;
   }
   const plus = e.target.closest("[data-plus]");
   const minus = e.target.closest("[data-minus]");
   const remove = e.target.closest("[data-remove]");
-  if(plus){ cart.find(x=>x.id===Number(plus.dataset.plus)).qty++; saveCart(); }
+  const match = el => cart.find(x=>x.id===Number(el.dataset.plus||el.dataset.minus||el.dataset.remove) && x.size===(el.dataset.size||"") && x.player===(el.dataset.player||""));
+  if(plus){ match(plus).qty++; saveCart(); }
   if(minus){
-    const item=cart.find(x=>x.id===Number(minus.dataset.minus));
-    item.qty--; if(item.qty<=0) cart=cart.filter(x=>x.id!==item.id); saveCart();
+    const item=match(minus);
+    item.qty--; if(item.qty<=0) cart=cart.filter(x=>!(x.id===item.id && x.size===item.size && x.player===item.player)); saveCart();
   }
-  if(remove){ cart=cart.filter(x=>x.id!==Number(remove.dataset.remove)); saveCart(); }
+  if(remove){ const item=match(remove); cart=cart.filter(x=>!(x.id===item.id && x.size===item.size && x.player===item.player)); saveCart(); }
 });
 
 document.querySelectorAll(".filter").forEach(btn => btn.addEventListener("click",()=>{
@@ -179,4 +225,6 @@ menu.addEventListener("click",()=>{const open=nav.classList.toggle("open");menu.
 nav.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>nav.classList.remove("open")));
 
 renderProducts();
+renderGrid(document.getElementById("bestSellers"), products.filter(p=>p.bestseller));
+renderGrid(document.getElementById("newDrop"), products.filter(p=>p.limited));
 renderCart();
