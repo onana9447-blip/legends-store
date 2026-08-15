@@ -181,15 +181,28 @@ document.getElementById("checkoutBtn").onclick=()=>{
 document.getElementById("closeModal").onclick=()=>modal.classList.remove("open");
 modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.remove("open")});
 
-document.getElementById("checkoutForm").addEventListener("submit",e=>{
+document.getElementById("checkoutForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const fd=new FormData(e.target);
+  let total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const couponCode = (fd.get("coupon")||"").trim();
+  let coupon = "";
+  if (couponCode && BACKEND_URL) {
+    try {
+      const r = await fetch(BACKEND_URL, { method:"POST", mode:"cors", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action:"applyCoupon", code:couponCode }) });
+      const d = await r.json();
+      if (d.ok) {
+        coupon = couponCode;
+        total = d.type==="percent" ? Math.round(total*(1-d.value/100)) : Math.max(0, total - d.value);
+      }
+    } catch {}
+  }
   const order={
     id:Date.now(),
     date:new Date().toISOString(),
-    customer:{name:fd.get("name"),phone:fd.get("phone"),address:fd.get("address"),payment:fd.get("payment")},
-    items:cart.map(i=>({name:i.name,price:i.price,qty:i.qty,mark:i.mark})),
-    total:cart.reduce((s,i)=>s+i.price*i.qty,0)
+    customer:{name:fd.get("name"),phone:fd.get("phone"),city:fd.get("city"),address:fd.get("address"),payment:fd.get("payment")},
+    items:cart.map(i=>({id:i.id,name:i.name,price:i.price,qty:i.qty,mark:i.mark})),
+    total, coupon
   };
   const local = JSON.parse(localStorage.getItem("legends-orders") || "[]");
   local.unshift(order);
@@ -200,7 +213,7 @@ document.getElementById("checkoutForm").addEventListener("submit",e=>{
       method: "POST",
       mode: "cors",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: BACKEND_WRITE_KEY, order })
+      body: JSON.stringify({ key: BACKEND_WRITE_KEY, action:"createOrder", order })
     }).catch(() => {});
   }
 
@@ -209,9 +222,26 @@ document.getElementById("checkoutForm").addEventListener("submit",e=>{
     window.open(url, "_blank");
   }
 
-  document.getElementById("checkoutNote").textContent = "Commande prête — envoyez-la sur WhatsApp pour confirmer ✅";
+  document.getElementById("checkoutNote").textContent = "Order #" + order.id + " ready — send it on WhatsApp to confirm ✅";
   cart=[]; saveCart();
   setTimeout(()=>{modal.classList.remove("open");closeCart();e.target.reset();document.getElementById("checkoutNote").textContent=""},1800);
+});
+
+const ORDER_STEPS = ["Pending","Confirmed","Preparing","Shipped","Delivered"];
+document.getElementById("trackBtn").addEventListener("click",async ()=>{
+  const id = document.getElementById("trackId").value.trim();
+  const phone = document.getElementById("trackPhone").value.trim();
+  const res = document.getElementById("trackResult");
+  if(!id||!phone){ res.innerHTML = "<p class='form-note'>Enter order # and phone.</p>"; return; }
+  if(!BACKEND_URL){ res.innerHTML = "<p class='form-note'>Tracking needs the backend configured.</p>"; return; }
+  try {
+    const r = await fetch(BACKEND_URL, { method:"POST", mode:"cors", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ action:"trackOrder", id:Number(id), phone }) });
+    const d = await r.json();
+    if(!d.order){ res.innerHTML = "<p class='form-note'>Order not found or phone mismatch.</p>"; return; }
+    const step = ORDER_STEPS.indexOf(d.order.status);
+    const line = ORDER_STEPS.map((s,i)=>`<span class="tstep ${i<=step?"done":""}">${i<=step?"🟢":"⚪"} ${s}</span>`).join(" → ");
+    res.innerHTML = `<p><b>Order #${d.order.id}</b> · ${d.order.total} MAD</p><div class="track-steps">${line}</div>`;
+  } catch { res.innerHTML = "<p class='form-note'>Error contacting server.</p>"; }
 });
 
 document.getElementById("contactForm").addEventListener("submit",e=>{

@@ -1,151 +1,219 @@
-const ADMIN_PASS = "admin123"; // utilisé uniquement en mode local (sans backend)
 const BACKEND_URL = "";        // collez l'URL du Web App ici
+let readKey = "";
 
 const gate = document.getElementById("gate");
 const app = document.getElementById("app");
 const passInput = document.getElementById("passInput");
 const gateErr = document.getElementById("gateErr");
 
-let readKey = "";
-
-function money(n) { return `${Number(n).toLocaleString("en-US")} MAD`; }
+function api(action, extra={}) {
+  return fetch(BACKEND_URL, {
+    method: "POST", mode: "cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ key: readKey, action, ...extra })
+  }).then(r => r.json());
+}
 
 async function unlock() {
   const val = passInput.value.trim();
   if (!val) { gateErr.textContent = "Entrez la clé."; return; }
-
-  if (!BACKEND_URL) {
-    if (val === ADMIN_PASS) { openApp(); render(); }
-    else gateErr.textContent = "Code incorrect.";
-    return;
-  }
-
+  if (!BACKEND_URL) { gateErr.textContent = "BACKEND_URL vide dans admin.js"; return; }
   try {
-    const r = await fetch(BACKEND_URL, {
-      method: "POST",
-      mode: "cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "read", key: val })
-    });
-    const d = await r.json();
-    if (Array.isArray(d.orders)) {
+    const d = await api("stats", { key: val });
+    if (d && typeof d.totalSales !== "undefined") {
       readKey = val;
-      openApp();
-      render();
+      gate.style.display = "none";
+      app.classList.add("open");
+      document.getElementById("who").textContent = "SECRET ✓";
+      showTab("overview");
     } else {
       gateErr.textContent = "Clé incorrecte ou accès refusé.";
     }
-  } catch {
-    gateErr.textContent = "Erreur de connexion au backend.";
-  }
+  } catch { gateErr.textContent = "Erreur de connexion au backend."; }
 }
-
-function openApp() {
-  gate.style.display = "none";
-  app.hidden = false;
-}
-
-document.getElementById("gateBtn").addEventListener("click", unlock);
+document.getElementById("gateBtn").onclick = unlock;
 passInput.addEventListener("keydown", e => { if (e.key === "Enter") unlock(); });
+document.getElementById("logoutBtn").onclick = () => { readKey=""; app.classList.remove("open"); gate.style.display="flex"; };
 
-async function backendRead() {
-  if (!BACKEND_URL) return [];
-  try {
-    const r = await fetch(BACKEND_URL, {
-      method: "POST",
-      mode: "cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "read", key: readKey })
-    });
-    const d = await r.json();
-    return Array.isArray(d.orders) ? d.orders : [];
-  } catch {
-    return [];
-  }
+// tabs
+document.querySelectorAll(".side button").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+function showTab(t){
+  document.querySelectorAll(".side button").forEach(b=>b.classList.toggle("active", b.dataset.tab===t));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById(t).classList.add("active");
+  ({overview:renderOverview,orders:renderOrders,products:renderProducts,coupons:renderCoupons,profit:renderProfit,reviews:renderReviews}[t]());
 }
 
-function loadLocalOrders() {
-  try { return JSON.parse(localStorage.getItem("legends-orders") || "[]"); }
-  catch { return []; }
+const money = n => `${Number(n||0).toLocaleString("en-US")} MAD`;
+const pill = s => `<span class="pill ${s}">${s}</span>`;
+
+// ---------- Overview ----------
+async function renderOverview(){
+  const s = await api("stats");
+  const el = document.getElementById("overview");
+  el.innerHTML = `
+    <div class="cards">
+      <div class="card"><b>${money(s.totalSales)}</b><small>Total sales</small></div>
+      <div class="card"><b>${money(s.monthlyRevenue)}</b><small>Monthly revenue</small></div>
+      <div class="card"><b>${s.todayOrders}</b><small>Orders today</small></div>
+      <div class="card"><b>${money(s.profit)}</b><small>Est. profit</small></div>
+      <div class="card"><b>${s.pending}</b><small>Pending</small></div>
+      <div class="card"><b>${s.shipped}</b><small>Shipped</small></div>
+      <div class="card"><b>${s.delivered}</b><small>Delivered</small></div>
+      <div class="card"><b>${s.cancelled}</b><small>Cancelled</small></div>
+    </div>
+    <h3>Best-selling</h3>
+    <table><tr><th>Product</th><th>Qty</th></tr>
+      ${s.bestSelling.map(b=>`<tr><td>${b.name}</td><td>${b.qty}</td></tr>`).join("") || "<tr><td colspan=2>—</td></tr>"}
+    </table>
+    <h3 style="margin-top:20px">Low stock (≤5)</h3>
+    <table><tr><th>Product</th><th>Stock</th></tr>
+      ${s.lowStock.map(p=>`<tr><td>${p.name}</td><td>${p.stock}</td></tr>`).join("") || "<tr><td colspan=2>—</td></tr>"}
+    </table>`;
 }
 
-async function render() {
-  const ordersEl = document.getElementById("orders");
-  ordersEl.innerHTML = `<div class="empty">Chargement…</div>`;
-
-  const [local, backend] = await Promise.all([loadLocalOrders(), backendRead()]);
-  const byId = new Map();
-  [...backend, ...local].forEach(o => { if (o && o.id) byId.set(o.id, o); });
-  const orders = [...byId.values()].sort((a, b) => (b.id || 0) - (a.id || 0));
-
-  const revenue = orders.reduce((s, o) => s + (o.total || 0), 0);
-  document.getElementById("statCount").textContent = orders.length;
-  document.getElementById("statRevenue").textContent = money(revenue);
-
-  if (!orders.length) {
-    ordersEl.innerHTML = `<div class="empty">Aucune commande pour l'instant.<br>Les commandes passées sur le site apparaîtront ici.</div>`;
-    return;
-  }
-
-  ordersEl.innerHTML = orders.map(o => {
-    const date = o.date ? new Date(o.date).toLocaleString("fr-FR") : "-";
-    const items = (o.items || []).map(i => `
-      <div class="item">
-        <span>${i.mark ? "[" + i.mark + "] " : ""}${i.name} ×${i.qty}</span>
-        <span>${money(i.price * i.qty)}</span>
-      </div>`).join("");
-    return `
-      <div class="order">
-        <div class="order-top">
-          <div>
-            <div class="order-id">#${o.id}</div>
-            <span class="badge">NOUVEAU</span>
-          </div>
-          <div class="order-date">${date}</div>
-        </div>
-        <div class="cust">
-          <div><small>Nom</small>${o.customer?.name || "-"}</div>
-          <div><small>Téléphone</small>${o.customer?.phone || "-"}</div>
-          <div><small>Adresse</small>${o.customer?.address || "-"}</div>
-        </div>
-        <div class="items">${items}</div>
-        <div class="order-foot">
-          <div class="total">${money(o.total)}</div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <span class="pay">${o.customer?.payment || "-"}</span>
-            <button class="btn-danger" data-del="${o.id}">Supprimer</button>
-          </div>
-        </div>
-      </div>`;
-  }).join("");
+// ---------- Orders ----------
+async function renderOrders(){
+  const { orders } = await api("getOrders");
+  const el = document.getElementById("orders");
+  const statuses = ["Pending","Confirmed","Preparing","Shipped","Delivered","Cancelled"];
+  el.innerHTML = `
+    <div class="bar"><button class="btn-dark" onclick="renderOrders()">↻ Refresh</button></div>
+    <table>
+      <tr><th>#</th><th>Customer</th><th>Product</th><th>Total</th><th>Status</th><th></th></tr>
+      ${orders.sort((a,b)=>b.id-a.id).map(o=>{
+        const items = (()=>{try{return JSON.parse(o.items||"[]")}catch(e){return[]}})();
+        const prod = items.map(i=>`${i.name} ×${i.qty}`).join("<br>");
+        return `<tr>
+          <td>#${o.id}</td>
+          <td>${o.name||""}<br><small>${o.phone||""} · ${o.city||""}</small></td>
+          <td>${prod}</td>
+          <td>${money(o.total)}</td>
+          <td><select data-st="${o.id}">${statuses.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select></td>
+          <td><button class="btn-danger" data-del="${o.id}">Delete</button></td>
+        </tr>`;
+      }).join("") || "<tr><td colspan=6>—</td></tr>"}
+    </table>`;
+  el.querySelectorAll("[data-st]").forEach(sel=>sel.onchange=async()=>{
+    await api("updateOrder",{id:Number(sel.dataset.st),status:sel.value});
+    renderOrders();
+  });
+  el.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{
+    if(confirm("Supprimer la commande ?")){ await api("deleteOrder",{id:Number(b.dataset.del)}); renderOrders(); }
+  });
 }
 
-document.getElementById("orders").addEventListener("click", async e => {
-  const del = e.target.closest("[data-del]");
-  if (!del) return;
-  const id = Number(del.dataset.del);
-  if (BACKEND_URL) {
-    await fetch(BACKEND_URL, {
-      method: "POST",
-      mode: "cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "delete", key: readKey, id })
-    });
-  }
-  render();
-});
+// ---------- Products ----------
+async function renderProducts(){
+  const { products } = await api("getProducts");
+  const el = document.getElementById("products");
+  el.innerHTML = `
+    <div class="bar">
+      <button class="btn-dark" id="addProd">+ Add product</button>
+      <button class="btn-ghost" onclick="renderProducts()">↻ Refresh</button>
+    </div>
+    <table>
+      <tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th><th>Cost</th><th></th></tr>
+      ${products.map(p=>`<tr>
+        <td>${p.id}</td><td>${p.name}</td><td>${money(p.price)}</td>
+        <td>${p.stock}</td><td>${money(p.cost)}</td>
+        <td><button class="btn-ghost" data-edit="${p.id}">Edit</button>
+            <button class="btn-danger" data-pdel="${p.id}">Del</button></td>
+      </tr>`).join("") || "<tr><td colspan=6>—</td></tr>"}
+    </table>`;
+  el.querySelector("#addProd").onclick = () => openProd({});
+  el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=async()=>{
+    const { products } = await api("getProducts");
+    openProd(products.find(p=>String(p.id)===b.dataset.edit));
+  });
+  el.querySelectorAll("[data-pdel]").forEach(b=>b.onclick=async()=>{
+    if(confirm("Supprimer le produit ?")){ await api("deleteProduct",{id:Number(b.dataset.pdel)}); renderProducts(); }
+  });
+}
+function openProd(p){
+  p = p || {};
+  const f = document.getElementById("prodForm");
+  f.reset();
+  f.id.value = p.id||"";
+  f.name.value = p.name||"";
+  f.meta.value = p.meta||"";
+  f.category.value = p.category||"";
+  f.price.value = p.price||"";
+  f.oldPrice.value = p.oldPrice||"";
+  f.stock.value = p.stock||"";
+  f.rating.value = p.rating||5;
+  f.sizes.value = Array.isArray(p.sizes)?p.sizes.join(","):(p.sizes||"");
+  f.club.value = p.club||"";
+  f.season.value = p.season||"";
+  f.image.value = p.image||"";
+  f.cost.value = p.cost||"";
+  f.deliveryCost.value = p.deliveryCost||"";
+  f.adsCost.value = p.adsCost||"";
+  f.description.value = p.description||"";
+  f.material.value = p.material||"";
+  f.featured.checked = !!p.featured;
+  f.limited.checked = !!p.limited;
+  document.getElementById("prodModal").classList.add("open");
+}
+document.getElementById("prodClose").onclick = () => document.getElementById("prodModal").classList.remove("open");
+document.getElementById("prodForm").onsubmit = async e => {
+  e.preventDefault();
+  const f = e.target;
+  const product = {
+    id: f.id.value ? Number(f.id.value) : "",
+    name:f.name.value, meta:f.meta.value, category:f.category.value,
+    price:Number(f.price.value), oldPrice:f.oldPrice.value?Number(f.oldPrice.value):"",
+    rating:Number(f.rating.value)||5, stock:Number(f.stock.value)||0,
+    sizes:f.sizes.value.split(",").map(s=>s.trim()).filter(Boolean),
+    club:f.club.value, season:f.season.value, image:f.image.value,
+    cost:Number(f.cost.value)||0, deliveryCost:Number(f.deliveryCost.value)||0, adsCost:Number(f.adsCost.value)||0,
+    description:f.description.value, material:f.material.value,
+    featured:f.featured.checked, limited:f.limited.checked
+  };
+  await api("saveProduct",{product});
+  document.getElementById("prodModal").classList.remove("open");
+  renderProducts();
+};
 
-document.getElementById("refreshBtn").addEventListener("click", render);
+// ---------- Coupons ----------
+async function renderCoupons(){
+  const { coupons } = await api("getCoupons");
+  const el = document.getElementById("coupons");
+  el.innerHTML = `
+    <div class="bar"><button class="btn-dark" id="addC">+ Add coupon</button></div>
+    <table><tr><th>Code</th><th>Type</th><th>Value</th><th>Active</th><th></th></tr>
+    ${coupons.map(c=>`<tr><td>${c.code}</td><td>${c.type}</td><td>${c.value}${c.type==="percent"?"%":" MAD"}</td>
+      <td>${c.active?"✓":"✗"}</td><td><button class="btn-danger" data-cdel="${c.id}">Del</button></td></tr>`).join("")||"<tr><td colspan=5>—</td></tr>"}
+    </table>`;
+  el.querySelector("#addC").onclick = async () => {
+    const code = prompt("Code (ex: WELCOME10)?"); if(!code) return;
+    const type = prompt("Type: percent ou fixed", "percent"); if(!type) return;
+    const value = prompt("Valeur (ex: 10)?"); if(value===null) return;
+    await api("saveCoupon",{coupon:{code,type,value:Number(value),active:true}});
+    renderCoupons();
+  };
+  el.querySelectorAll("[data-cdel]").forEach(b=>b.onclick=async()=>{
+    await api("deleteCoupon",{id:Number(b.dataset.cdel)}); renderCoupons();
+  });
+}
 
-document.getElementById("clearBtn").addEventListener("click", async () => {
-  if (!confirm("Supprimer toutes les commandes ?")) return;
-  if (BACKEND_URL) {
-    await fetch(BACKEND_URL, {
-      method: "POST",
-      mode: "cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "clear", key: readKey })
-    });
-  }
-  render();
-});
+// ---------- Profit ----------
+async function renderProfit(){
+  const s = await api("stats");
+  document.getElementById("profit").innerHTML = `
+    <div class="cards">
+      <div class="card"><b>${money(s.totalSales)}</b><small>Revenue</small></div>
+      <div class="card"><b>${money(s.profit)}</b><small>Est. profit</small></div>
+      <div class="card"><b>${s.ordersTotal}</b><small>Total orders</small></div>
+    </div>
+    <p style="color:var(--muted)">Profit = (prix − coût fournisseur − emballage 5 MAD − livraison − pub) × quantité, hors commandes annulées.</p>`;
+}
+
+// ---------- Reviews ----------
+async function renderReviews(){
+  const { reviews } = await api("getReviews");
+  document.getElementById("reviews").innerHTML = `
+    <table><tr><th>Name</th><th>★</th><th>Comment</th><th>Verified</th></tr>
+    ${reviews.map(r=>`<tr><td>${r.name}</td><td>${r.rating}</td><td>${r.comment||""}</td><td>${r.verified?"✓":"✗"}</td></tr>`).join("")||"<tr><td colspan=4>—</td></tr>"}
+    </table>`;
+}

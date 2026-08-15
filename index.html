@@ -158,6 +158,21 @@
         <p class="form-note" id="contactNote"></p>
       </form>
     </section>
+    <section class="section track">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">AFTER ORDER</p>
+          <h2>TRACK YOUR ORDER</h2>
+        </div>
+        <p class="section-intro">Enter your order number and phone to see its status.</p>
+      </div>
+      <div class="track-box">
+        <input id="trackId" placeholder="Order # (ex: 21245)">
+        <input id="trackPhone" placeholder="Phone used">
+        <button class="btn btn-dark" id="trackBtn" type="button">Track</button>
+      </div>
+      <div id="trackResult"></div>
+    </section>
   </main>
 
   <footer class="footer">
@@ -191,10 +206,11 @@
       <h2>PAYMENT DETAILS</h2>
       <form id="checkoutForm">
         <div class="two"><label>Full name<input required name="name"></label><label>Phone<input required name="phone" type="tel"></label></div>
-        <label>Address<input required name="address" placeholder="City, street, building"></label>
+        <div class="two"><label>City<input required name="city" placeholder="Casablanca"></label><label>Address<input required name="address" placeholder="Street, building"></label></div>
         <label>Payment method
           <select name="payment"><option>Cash on delivery</option><option>Bank transfer</option><option>Card payment</option></select>
         </label>
+        <label>Coupon code<input name="coupon" placeholder="WELCOME10"></label>
         <div class="checkout-summary"><span>Order total</span><strong id="checkoutTotal">0 MAD</strong></div>
         <button class="btn btn-dark full" type="submit">Confirm order</button>
         <p class="form-note" id="checkoutNote"></p>

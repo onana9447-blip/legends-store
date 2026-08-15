@@ -3,74 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LEGENDS — Admin · Orders</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <title>LEGENDS — Admin Dashboard</title>
   <style>
-    :root{--bg:#0c0d10;--panel:#15171c;--line:#262a32;--text:#eef1f5;--muted:#9aa3b0;--accent:#e23b3b;--ok:#2ecc71}
+    :root{--bg:#0c0d10;--panel:#15171c;--line:#262a32;--text:#eef1f5;--muted:#9aa3b0;--accent:#e23b3b;--ok:#2ecc71;--warn:#f1c40f}
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
-    .wrap{max-width:980px;margin:0 auto;padding:28px 20px 80px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
-    .brand{font-family:Oswald,sans-serif;font-size:26px;letter-spacing:.5px}
-    .brand span{color:var(--accent)}
-    .stats{display:flex;gap:14px;flex-wrap:wrap}
-    .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-width:120px}
-    .stat b{display:block;font-family:Oswald,sans-serif;font-size:24px}
-    .stat small{color:var(--muted)}
-    .toolbar{display:flex;gap:10px;margin:18px 0;flex-wrap:wrap}
-    button{cursor:pointer;font-family:inherit;border:none;border-radius:9px;padding:9px 14px;font-weight:600}
-    .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
-    .btn-danger{background:transparent;color:var(--accent);border:1px solid var(--accent)}
-    .order{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
-    .order-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
-    .order-id{color:var(--muted);font-size:13px}
-    .order-date{color:var(--muted);font-size:13px}
-    .cust{margin:10px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px 18px}
-    .cust div small{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.4px}
-    .items{margin:12px 0 6px;border-top:1px dashed var(--line);padding-top:10px}
-    .item{display:flex;justify-content:space-between;gap:10px;padding:4px 0;color:var(--text)}
-    .item span:last-child{color:var(--muted);white-space:nowrap}
-    .order-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:10px}
-    .total{font-family:Oswald,sans-serif;font-size:20px}
-    .pay{font-size:12px;background:#1f2228;border:1px solid var(--line);padding:4px 9px;border-radius:999px;color:var(--muted)}
-    .empty{text-align:center;color:var(--muted);padding:60px 0}
+    a{color:inherit}
+    button{font-family:inherit;cursor:pointer;border:none;border-radius:8px;padding:9px 14px;font-weight:600}
+    input,select,textarea{font:inherit;background:#0e1014;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:9px 10px;width:100%}
+    label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:10px 0 5px}
+
     .gate{position:fixed;inset:0;background:rgba(8,9,11,.96);display:flex;align-items:center;justify-content:center;z-index:50}
     .gate-box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px;width:min(360px,90vw);text-align:center}
     .gate-box h2{font-family:Oswald,sans-serif;margin:0 0 6px}
     .gate-box p{color:var(--muted);margin:0 0 16px;font-size:14px}
-    .gate-box input{width:100%;padding:11px 12px;border-radius:9px;border:1px solid var(--line);background:#0e1014;color:var(--text);font-size:16px;margin-bottom:12px}
     .gate-box button{width:100%;background:var(--accent);color:#fff}
     .err{color:var(--accent);font-size:13px;min-height:18px;margin-bottom:8px}
-    .badge{font-size:11px;color:var(--ok);border:1px solid var(--ok);border-radius:999px;padding:2px 8px}
+
+    .app{display:none}
+    .app.open{display:block}
+    .topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:10}
+    .topbar .brand{font-family:Oswald,sans-serif;font-size:22px}
+    .topbar .brand span{color:var(--accent)}
+    .topbar .right{display:flex;gap:18px;align-items:center;font-size:13px}
+    .layout{display:flex}
+    .side{width:200px;padding:18px;border-right:1px solid var(--line);min-height:calc(100vh - 65px)}
+    .side button{display:block;width:100%;text-align:left;background:transparent;color:var(--muted);margin-bottom:4px}
+    .side button.active,.side button:hover{background:var(--panel);color:var(--text)}
+    .main{flex:1;padding:24px}
+    .panel{display:none}
+    .panel.active{display:block}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+    .card b{display:block;font-family:Oswald,sans-serif;font-size:26px}
+    .card small{color:var(--muted)}
+    table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+    th,td{padding:10px 12px;text-align:left;font-size:13px;border-bottom:1px solid var(--line)}
+    th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px}
+    .pill{padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700}
+    .pill.Pending{background:#3a2a10;color:var(--warn)}
+    .pill.Confirmed{background:#10303a;color:#5ad}
+    .pill.Preparing{background:#2a2a10;color:var(--warn)}
+    .pill.Shipped{background:#102a3a;color:#5ad}
+    .pill.Delivered{background:#10301a;color:var(--ok)}
+    .pill.Cancelled{background:#3a1010;color:var(--accent)}
+    .btn-danger{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+    .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+    .btn-dark{background:var(--accent);color:#fff}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;max-width:760px}
+    .full{grid-column:1/-1}
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:60}
+    .modal-bg.open{display:flex}
+    .modal-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;width:min(720px,92vw);max-height:88vh;overflow:auto}
+    .bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
   </style>
 </head>
 <body>
   <div class="gate" id="gate">
     <div class="gate-box">
       <h2>ADMIN ACCESS</h2>
-      <p>Entrez le code pour voir les commandes.</p>
-      <input id="passInput" type="password" placeholder="Code admin" autocomplete="off">
+      <p>Entrez la clé secrète (SECRET).</p>
+      <input id="passInput" type="password" placeholder="SECRET" autocomplete="off">
       <div class="err" id="gateErr"></div>
       <button id="gateBtn">Entrer</button>
     </div>
   </div>
 
-  <div class="wrap" id="app" hidden>
-    <header>
+  <div class="app" id="app">
+    <div class="topbar">
       <div class="brand">LEG<span>ENDS</span> · Admin</div>
-      <div class="stats">
-        <div class="stat"><b id="statCount">0</b><small>Commandes</small></div>
-        <div class="stat"><b id="statRevenue">0 MAD</b><small>Revenu total</small></div>
+      <div class="right">
+        <span id="who"></span>
+        <button class="btn-ghost" id="logoutBtn">Déconnexion</button>
       </div>
-    </header>
-
-    <div class="toolbar">
-      <button class="btn-ghost" id="refreshBtn">Actualiser</button>
-      <button class="btn-danger" id="clearBtn">Tout supprimer</button>
     </div>
+    <div class="layout">
+      <div class="side">
+        <button data-tab="overview" class="active">📊 Overview</button>
+        <button data-tab="orders">📦 Orders</button>
+        <button data-tab="products">👕 Products</button>
+        <button data-tab="coupons">🎟️ Coupons</button>
+        <button data-tab="profit">💰 Profit</button>
+        <button data-tab="reviews">⭐ Reviews</button>
+      </div>
+      <div class="main">
+        <section class="panel active" id="overview"></section>
+        <section class="panel" id="orders"></section>
+        <section class="panel" id="products"></section>
+        <section class="panel" id="coupons"></section>
+        <section class="panel" id="profit"></section>
+        <section class="panel" id="reviews"></section>
+      </div>
+    </div>
+  </div>
 
-    <div id="orders"></div>
+  <div class="modal-bg" id="prodModal">
+    <div class="modal-card">
+      <button class="btn-ghost" style="float:right" id="prodClose">Fermer</button>
+      <h2 style="font-family:Oswald">Product</h2>
+      <form id="prodForm" class="form-grid">
+        <input type="hidden" name="id">
+        <div class="full"><label>Name<input name="name" required></label></div>
+        <div><label>Meta<input name="meta"></label></div>
+        <div><label>Category<input name="category" placeholder="club/classic/player"></label></div>
+        <div><label>Price (MAD)<input name="price" type="number"></label></div>
+        <div><label>Old price<input name="oldPrice" type="number"></label></div>
+        <div><label>Stock<input name="stock" type="number"></label></div>
+        <div><label>Rating<input name="rating" type="number" value="5"></label></div>
+        <div><label>Sizes (comma)<input name="sizes" placeholder="S,M,L,XL"></label></div>
+        <div><label>Club<input name="club"></label></div>
+        <div><label>Season<input name="season"></label></div>
+        <div><label>Image URL<input name="image"></label></div>
+        <div><label>Supplier cost<input name="cost" type="number"></label></div>
+        <div><label>Delivery cost<input name="deliveryCost" type="number"></label></div>
+        <div><label>Ads cost<input name="adsCost" type="number"></label></div>
+        <div class="full"><label>Description<textarea name="description" rows="2"></textarea></label></div>
+        <div class="full"><label>Material<textarea name="material" rows="2"></textarea></label></div>
+        <div><label><input type="checkbox" name="featured"> Featured</label></div>
+        <div><label><input type="checkbox" name="limited"> Limited / New drop</label></div>
+        <div class="full"><button class="btn-dark" type="submit">Save</button></div>
+      </form>
+    </div>
   </div>
 
   <script src="admin.js"></script>
