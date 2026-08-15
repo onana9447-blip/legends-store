@@ -12,12 +12,12 @@ const products = [
 // Current football-shirt collection.
 products.length = 0;
 products.push(
-  {id:1,name:"Paris Saint-Germain Home 2025/26",meta:"Club Collection",price:199,oldPrice:249,rating:5,stock:7,category:"club",sizes:["S","M","L","XL","XXL"],delivery:"2–4 days",bestseller:true,image:"image/psg-black-jersey.jpeg"},
-  {id:2,name:"AS Roma Home 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL","XXL"],delivery:"2–4 days",bestseller:true,image:"image/roma-jersey.jpeg"},
-  {id:3,name:"Manchester United Home 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL","XXL"],delivery:"2–4 days",bestseller:true,image:"image/man-utd-jersey.jpeg"},
-  {id:4,name:"FC Barcelona 1899 Anniversary",meta:"Classic Collection · 1899–1999",price:199,rating:5,stock:5,category:"classic",sizes:["S","M","L","XL","XXL"],delivery:"3–5 days",limited:true,image:"image/barcelona-1899-jersey.jpeg"},
-  {id:5,name:"FC Barcelona Pink 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL","XXL"],delivery:"2–4 days",bestseller:true,limited:true,image:"image/barcelona-pink-jersey.jpeg"},
-  {id:6,name:"Real Madrid Home 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL","XXL"],delivery:"2–4 days",bestseller:true,image:"image/real-madrid-jersey.jpeg"}
+  {id:1,name:"Paris Saint-Germain Home 2025/26",meta:"Club Collection",price:199,oldPrice:249,rating:5,stock:7,category:"club",sizes:["S","M","L","XL"],delivery:"2–4 days",bestseller:true,image:"image/psg-black-jersey.jpeg"},
+  {id:2,name:"AS Roma Home 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL"],delivery:"2–4 days",bestseller:true,image:"image/roma-jersey.jpeg"},
+  {id:3,name:"Manchester United Home 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL"],delivery:"2–4 days",bestseller:true,image:"image/man-utd-jersey.jpeg"},
+  {id:4,name:"FC Barcelona 1899 Anniversary",meta:"Classic Collection · 1899–1999",price:199,rating:5,stock:5,category:"classic",sizes:["S","M","L","XL"],delivery:"3–5 days",limited:true,image:"image/barcelona-1899-jersey.jpeg"},
+  {id:5,name:"FC Barcelona Pink 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL"],delivery:"2–4 days",bestseller:true,limited:true,image:"image/barcelona-pink-jersey.jpeg"},
+  {id:6,name:"Real Madrid Home 2025/26",meta:"Club Collection",price:199,rating:5,category:"club",sizes:["S","M","L","XL"],delivery:"2–4 days",bestseller:true,image:"image/real-madrid-jersey.jpeg"}
 );
 
 let cart = JSON.parse(localStorage.getItem("legends-cart") || "[]");
