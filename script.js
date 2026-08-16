@@ -27,7 +27,7 @@ let cart = JSON.parse(localStorage.getItem("legends-cart") || "[]");
 // 1) Copiez le contenu de "apps-script.js" dans https://script.google.com, déployez en Web App.
 // 2) Collez l'URL déployée dans BACKEND_URL et la clé WRITE_KEY (publique) dans BACKEND_WRITE_KEY.
 //    La clé SECRET (lecture) reste côté admin et n'est JAMAIS écrite ici.
-const BACKEND_URL = "";
+const BACKEND_URL = localStorage.getItem("legends-backend-url") || "";
 const BACKEND_WRITE_KEY = "legendsWritePub2026";
 
 // ===== LIVRAISON WHATSAPP =====

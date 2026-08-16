@@ -1,4 +1,4 @@
-const BACKEND_URL = "";        // collez l'URL du Web App ici
+let BACKEND_URL = localStorage.getItem("legends-backend-url") || "";   // défini via l'écran de login
 let readKey = "";
 
 const gate = document.getElementById("gate");
@@ -16,8 +16,10 @@ function api(action, extra={}) {
 
 async function unlock() {
   const val = passInput.value.trim();
+  const url = document.getElementById("urlInput").value.trim();
+  if (url) { BACKEND_URL = url; localStorage.setItem("legends-backend-url", url); }
   if (!val) { gateErr.textContent = "Entrez la clé."; return; }
-  if (!BACKEND_URL) { gateErr.textContent = "BACKEND_URL vide dans admin.js"; return; }
+  if (!BACKEND_URL) { gateErr.textContent = "Collez d'abord l'URL du backend (apps-script.js Web App)."; return; }
   try {
     const d = await api("stats", { key: val });
     if (d && typeof d.totalSales !== "undefined") {
