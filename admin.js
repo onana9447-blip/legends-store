@@ -1,4 +1,4 @@
-let BACKEND_URL = localStorage.getItem("legends-backend-url") || "";   // défini via l'écran de login
+let BACKEND_URL = "https://script.google.com/macros/s/AKfycbzsmQy56-f4-Pc0_zGY-hRSCwMJaZNZLV7jH0iQafZEjYFi5ZXI4t1fKZU8lr700xIo/exec";   // défini via l'écran de login
 let readKey = "";
 
 const gate = document.getElementById("gate");
