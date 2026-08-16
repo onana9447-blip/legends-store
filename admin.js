@@ -72,34 +72,54 @@ async function renderOverview(){
 }
 
 // ---------- Orders ----------
-async function renderOrders(){
+async function renderOrders(filter="All"){
   const { orders } = await api("getOrders");
   const el = document.getElementById("orders");
   const statuses = ["Pending","Confirmed","Preparing","Shipped","Delivered","Cancelled"];
+  const list = orders.sort((a,b)=>b.id-a.id).filter(o => filter==="All" || o.status===filter);
+  const filters = ["All",...statuses].map(s=>`<button class="of-btn ${s===filter?"active":""}" data-f="${s}">${s}</button>`).join("");
   el.innerHTML = `
-    <div class="bar"><button class="btn-dark" onclick="renderOrders()">↻ Refresh</button></div>
-    <table>
-      <tr><th>#</th><th>Customer</th><th>Product</th><th>Total</th><th>Status</th><th></th></tr>
-      ${orders.sort((a,b)=>b.id-a.id).map(o=>{
-        const items = (()=>{try{return JSON.parse(o.items||"[]")}catch(e){return[]}})();
-        const prod = items.map(i=>`${i.name} ×${i.qty}`).join("<br>");
-        return `<tr>
-          <td>#${o.id}</td>
-          <td>${o.name||""}<br><small>${o.phone||""} · ${o.city||""}</small></td>
-          <td>${prod}</td>
-          <td>${money(o.total)}</td>
-          <td><select data-st="${o.id}">${statuses.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select></td>
-          <td><button class="btn-danger" data-del="${o.id}">Delete</button></td>
-        </tr>`;
-      }).join("") || "<tr><td colspan=6>—</td></tr>"}
-    </table>`;
+    <div class="bar"><h2 class="sec-title">NEW ORDERS</h2><button class="btn-ghost" onclick="renderOrders()">↻ Refresh</button></div>
+    <div class="order-filters">${filters}</div>
+    <div class="order-list">
+      ${list.map(o=>{
+        const items=(()=>{try{return JSON.parse(o.items||"[]")}catch(e){return[]}})();
+        const lines = items.map(i=>{
+          let l = i.name;
+          if(i.size) l += ` — Size: ${i.size}`;
+          if(i.player && i.player!=="No name" && i.player!=="") l += ` — ${i.player}`;
+          if(i.qty>1) l += ` ×${i.qty}`;
+          return `<div class="oc-item">${l}</div>`;
+        }).join("") || "<div class='oc-item'>-</div>";
+        return `<div class="order-card">
+          <div class="oc-head">
+            <div class="oc-id">#${o.id}</div>
+            <select class="oc-status" data-st="${o.id}">${statuses.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select>
+          </div>
+          <div class="oc-grid">
+            <div><span>Customer</span>${o.name||"-"}</div>
+            <div><span>Phone</span>${o.phone||"-"}</div>
+            <div><span>City</span>${o.city||"-"}</div>
+            <div><span>Address</span>${o.address||"-"}</div>
+            <div><span>Payment</span>${o.payment||"-"}</div>
+            ${o.coupon?`<div><span>Coupon</span>${o.coupon}</div>`:""}
+          </div>
+          <div class="oc-items">${lines}</div>
+          <div class="oc-foot">
+            <div class="oc-total">Total: ${money(o.total)}</div>
+            <button class="btn-danger" data-del="${o.id}">Delete</button>
+          </div>
+        </div>`;
+      }).join("") || "<p class='form-note'>No orders yet.</p>"}
+    </div>`;
   el.querySelectorAll("[data-st]").forEach(sel=>sel.onchange=async()=>{
     await api("updateOrder",{id:Number(sel.dataset.st),status:sel.value});
-    renderOrders();
+    renderOrders(filter);
   });
   el.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{
-    if(confirm("Supprimer la commande ?")){ await api("deleteOrder",{id:Number(b.dataset.del)}); renderOrders(); }
+    if(confirm("Delete this order?")){ await api("deleteOrder",{id:Number(b.dataset.del)}); renderOrders(filter); }
   });
+  el.querySelectorAll(".of-btn").forEach(b=>b.onclick=()=>renderOrders(b.dataset.f));
 }
 
 // ---------- Products ----------
