@@ -24,7 +24,6 @@ async function unlock() {
       readKey = val;
       gate.style.display = "none";
       app.classList.add("open");
-      document.getElementById("who").textContent = "SECRET ✓";
       showTab("overview");
     } else {
       gateErr.textContent = "Clé incorrecte ou accès refusé.";
