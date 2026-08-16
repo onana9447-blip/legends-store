@@ -80,7 +80,13 @@ function buildCard(p){
       </div>
       <div class="opt">
         <div class="opt-label">Player</div>
-        <select class="player"><option>No name</option><option>Custom name</option></select>
+        <select class="player">
+          <option>No name</option>
+          <option>Name</option>
+          <option>Custom name</option>
+        </select>
+        <input class="player-name" type="text" placeholder="Player name" style="display:none;margin-top:7px">
+        <input class="player-num" type="text" inputmode="numeric" placeholder="Number" style="display:none;margin-top:7px">
       </div>
       <div class="meta-lines">
         <span>🚚 Delivery: ${p.delivery||"2–4 days"}</span>
@@ -142,7 +148,16 @@ document.addEventListener("click", e => {
     const p = products.find(x=>x.id===id);
     const sizeEl = card.querySelector(".size.active") || card.querySelector(".size");
     const size = sizeEl ? sizeEl.dataset.size : "";
-    const player = card.querySelector(".player").value;
+    const playerSel = card.querySelector(".player");
+    let player = playerSel.value;
+    if(player === "Name"){
+      const n = card.querySelector(".player-name").value.trim();
+      player = n ? "Name: " + n : "No name";
+    } else if(player === "Custom name"){
+      const n = card.querySelector(".player-name").value.trim();
+      const num = card.querySelector(".player-num").value.trim();
+      player = (n ? "Custom: " + n : "Custom") + (num ? " #" + num : "");
+    }
     const existing = cart.find(x=>x.id===p.id && x.size===size && x.player===player);
     if(existing) existing.qty++; else cart.push({...p, qty:1, size, player});
     saveCart(); openCart();
@@ -159,6 +174,17 @@ document.addEventListener("click", e => {
     item.qty--; if(item.qty<=0) cart=cart.filter(x=>!(x.id===item.id && x.size===item.size && x.player===item.player)); saveCart();
   }
   if(remove){ const item=match(remove); cart=cart.filter(x=>!(x.id===item.id && x.size===item.size && x.player===item.player)); saveCart(); }
+});
+
+document.addEventListener("change", e => {
+  const sel = e.target.closest(".player");
+  if(!sel) return;
+  const card = sel.closest(".product-card");
+  const nameI = card.querySelector(".player-name");
+  const numI = card.querySelector(".player-num");
+  if(sel.value === "No name"){ nameI.style.display="none"; numI.style.display="none"; nameI.value=""; numI.value=""; }
+  else if(sel.value === "Name"){ nameI.style.display="block"; numI.style.display="none"; numI.value=""; }
+  else { nameI.style.display="block"; numI.style.display="block"; }
 });
 
 document.querySelectorAll(".filter").forEach(btn => btn.addEventListener("click",()=>{
