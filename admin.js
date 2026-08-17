@@ -125,30 +125,46 @@ async function renderOrders(filter="All"){
 }
 
 // ---------- Products ----------
+function parseSS(p){
+  if(!p || !p.sizeStock) return {};
+  if(typeof p.sizeStock === "object") return p.sizeStock;
+  try { return JSON.parse(p.sizeStock); } catch(e){ return {}; }
+}
 async function renderProducts(){
-  const { products } = await api("getProducts");
+  const data = await api("getProducts");
+  const products = Array.isArray(data.products) ? data.products : [];
   const el = document.getElementById("products");
+  const rows = products.map(p=>{
+    const ss = parseSS(p);
+    let total = 0; Object.values(ss).forEach(v=> total += Number(v)||0);
+    if(!total) total = Number(p.stock)||0;
+    const status = total>0 ? `<span class="pill ok">In stock</span>` : `<span class="pill out">Sold out</span>`;
+    const thumb = p.image ? `<img src="${p.image}" style="width:38px;height:38px;object-fit:cover;border-radius:6px;margin-right:8px;vertical-align:middle">` : "";
+    return `<tr>
+      <td>${thumb}<b>${p.name||"-"}</b><br><small style="color:var(--muted)">${p.meta||""}</small></td>
+      <td>${p.club||"-"}</td>
+      <td>${money(p.price)}</td>
+      <td>${money(p.cost)}</td>
+      <td>${total}</td>
+      <td>${status}</td>
+      <td><button class="btn-ghost" data-edit="${p.id}">Edit</button>
+          <button class="btn-danger" data-pdel="${p.id}">Delete</button></td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="7" style="color:var(--muted)">No products yet. Click “+ Add Product”.</td></tr>`;
   el.innerHTML = `
     <div class="bar">
-      <button class="btn-dark" id="addProd">+ Add product</button>
-      <button class="btn-ghost" onclick="renderProducts()">↻ Refresh</button>
+      <h2 class="sec-title">PRODUCTS</h2>
+      <div><button class="btn-dark" id="addProd">+ Add Product</button>
+      <button class="btn-ghost" onclick="renderProducts()">↻ Refresh</button></div>
     </div>
-    <table>
-      <tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th><th>Cost</th><th></th></tr>
-      ${products.map(p=>`<tr>
-        <td>${p.id}</td><td>${p.name}</td><td>${money(p.price)}</td>
-        <td>${p.stock}</td><td>${money(p.cost)}</td>
-        <td><button class="btn-ghost" data-edit="${p.id}">Edit</button>
-            <button class="btn-danger" data-pdel="${p.id}">Del</button></td>
-      </tr>`).join("") || "<tr><td colspan=6>—</td></tr>"}
-    </table>`;
+    <table><tr><th>Product</th><th>Club</th><th>Price</th><th>Cost</th><th>Stock</th><th>Status</th><th>Actions</th></tr>${rows}</table>`;
   el.querySelector("#addProd").onclick = () => openProd({});
   el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=async()=>{
     const { products } = await api("getProducts");
     openProd(products.find(p=>String(p.id)===b.dataset.edit));
   });
   el.querySelectorAll("[data-pdel]").forEach(b=>b.onclick=async()=>{
-    if(confirm("Supprimer le produit ?")){ await api("deleteProduct",{id:Number(b.dataset.pdel)}); renderProducts(); }
+    if(confirm("Delete this product?")){ await api("deleteProduct",{id:Number(b.dataset.pdel)}); renderProducts(); }
   });
 }
 function openProd(p){
@@ -157,39 +173,43 @@ function openProd(p){
   f.reset();
   f.id.value = p.id||"";
   f.name.value = p.name||"";
-  f.meta.value = p.meta||"";
+  f.club.value = p.club||"";
+  f.season.value = p.season||"";
   f.category.value = p.category||"";
   f.price.value = p.price||"";
   f.oldPrice.value = p.oldPrice||"";
-  f.stock.value = p.stock||"";
-  f.rating.value = p.rating||5;
-  f.sizes.value = Array.isArray(p.sizes)?p.sizes.join(","):(p.sizes||"");
-  f.club.value = p.club||"";
-  f.season.value = p.season||"";
-  f.image.value = p.image||"";
   f.cost.value = p.cost||"";
-  f.deliveryCost.value = p.deliveryCost||"";
-  f.adsCost.value = p.adsCost||"";
+  f.image.value = p.image||"";
   f.description.value = p.description||"";
-  f.material.value = p.material||"";
-  f.featured.checked = !!p.featured;
-  f.limited.checked = !!p.limited;
+  const ALL = ["S","M","L","XL","XXL"];
+  const ss = parseSS(p);
+  const wrap = document.getElementById("sizeStockWrap");
+  wrap.innerHTML = ALL.map(s=>`
+    <div class="ss-row">
+      <label class="ss-chk"><input type="checkbox" name="sz_${s}" ${(p.sizes&&p.sizes.includes(s))?"checked":""}> ${s}</label>
+      <input type="number" name="st_${s}" placeholder="stock" value="${ss[s]!=null?ss[s]:""}" min="0">
+    </div>`).join("");
   document.getElementById("prodModal").classList.add("open");
 }
 document.getElementById("prodClose").onclick = () => document.getElementById("prodModal").classList.remove("open");
 document.getElementById("prodForm").onsubmit = async e => {
   e.preventDefault();
   const f = e.target;
+  const ALL = ["S","M","L","XL","XXL"];
+  const sizes = [], sizeStock = {};
+  ALL.forEach(s=>{
+    const chk = f.querySelector(`[name=sz_${s}]`);
+    const st = f.querySelector(`[name=st_${s}]`);
+    if(chk && chk.checked){ sizes.push(s); sizeStock[s] = Number(st.value)||0; }
+  });
   const product = {
     id: f.id.value ? Number(f.id.value) : "",
-    name:f.name.value, meta:f.meta.value, category:f.category.value,
+    name:f.name.value, meta:"", category:f.category.value,
     price:Number(f.price.value), oldPrice:f.oldPrice.value?Number(f.oldPrice.value):"",
-    rating:Number(f.rating.value)||5, stock:Number(f.stock.value)||0,
-    sizes:f.sizes.value.split(",").map(s=>s.trim()).filter(Boolean),
+    rating:5, sizes, sizeStock,
     club:f.club.value, season:f.season.value, image:f.image.value,
-    cost:Number(f.cost.value)||0, deliveryCost:Number(f.deliveryCost.value)||0, adsCost:Number(f.adsCost.value)||0,
-    description:f.description.value, material:f.material.value,
-    featured:f.featured.checked, limited:f.limited.checked
+    cost:Number(f.cost.value)||0, deliveryCost:0, adsCost:0,
+    description:f.description.value, material:"", featured:false, limited:false
   };
   await api("saveProduct",{product});
   document.getElementById("prodModal").classList.remove("open");

@@ -12,7 +12,7 @@ const PACKAGING_COST = 5;
 
 const SHEETS = {
   Orders:   ["id","date","name","phone","city","address","payment","status","total","coupon","items"],
-  Products: ["id","name","meta","price","oldPrice","rating","stock","sizes","category","image","cost","deliveryCost","adsCost","season","club","featured","limited","description","material"],
+  Products: ["id","name","meta","price","oldPrice","rating","stock","sizes","category","image","cost","deliveryCost","adsCost","season","club","featured","limited","description","material","sizeStock"],
   Coupons:  ["id","code","type","value","active"],
   Reviews:  ["id","orderId","name","rating","comment","photo","verified"],
   Messages: ["id","date","name","email","message"]
@@ -129,12 +129,19 @@ function saveProduct(p){
   p.price = Number(p.price)||0;
   p.oldPrice = p.oldPrice ? Number(p.oldPrice) : "";
   p.rating = Number(p.rating)||5;
-  p.stock = Number(p.stock)||0;
   p.cost = Number(p.cost)||0;
   p.deliveryCost = Number(p.deliveryCost)||0;
   p.adsCost = Number(p.adsCost)||0;
   p.featured = p.featured ? true : false;
   p.limited = p.limited ? true : false;
+  if(typeof p.sizes === "string") p.sizes = p.sizes.split(",").map(s=>s.trim()).filter(Boolean);
+  if(!Array.isArray(p.sizes)) p.sizes = [];
+  let ss = p.sizeStock;
+  if(typeof ss === "string"){ try{ ss = JSON.parse(ss); }catch(e){ ss = {}; } }
+  if(!ss || typeof ss !== "object") ss = {};
+  p.sizeStock = JSON.stringify(ss);
+  let total = 0; Object.keys(ss).forEach(k=> total += Number(ss[k])||0);
+  p.stock = total || (Number(p.stock)||0);
   if(p.id){ updateObj("Products", p); } else { appendObj("Products", p); }
 }
 function deleteProduct(id){ deleteObj("Products", id); }

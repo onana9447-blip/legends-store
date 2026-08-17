@@ -60,10 +60,19 @@ function money(n){ return `${n.toLocaleString("en-US")} MAD`; }
 function stars(n){ n = n || 5; return "★".repeat(n) + "☆".repeat(5 - n); }
 
 function buildCard(p){
-  const sizes = (p.sizes || ["S","M","L","XL"]).map((s,i)=>`<button class="size${i===1?" active":""}" data-size="${s}">${s}</button>`).join("");
+  const ss = (p.sizeStock && typeof p.sizeStock==="object") ? p.sizeStock : null;
+  const sizeArr = (p.sizes && p.sizes.length) ? p.sizes : ["S","M","L","XL"];
+  const firstAvail = sizeArr.findIndex(s=> !ss || (Number(ss[s])||0) > 0);
+  const sizes = sizeArr.map((s,i)=>{
+    const out = ss && (Number(ss[s])||0) <= 0;
+    const active = i===firstAvail ? " active" : "";
+    return `<button class="size${active}" data-size="${s}" ${out?"disabled":""}>${s}${out?" · out":""}</button>`;
+  }).join("");
+  const allOut = ss && sizeArr.every(s=>(Number(ss[s])||0) <= 0);
+  const badge = allOut ? `<div class="stock-badge out">Sold out</div>` : (p.stock ? `<div class="stock-badge">🔥 Only ${p.stock} pieces left</div>` : "");
   return `
   <article class="product-card" data-id="${p.id}">
-    ${p.stock ? `<div class="stock-badge">🔥 Only ${p.stock} pieces left</div>` : ""}
+    ${badge}
     <div class="product-visual"><img src="${p.image}" alt="${p.name}" loading="lazy"></div>
     <div class="product-body">
       <div class="product-top">
@@ -254,3 +263,34 @@ renderProducts();
 renderGrid(document.getElementById("bestSellers"), products.filter(p=>p.bestseller));
 renderGrid(document.getElementById("newDrop"), products.filter(p=>p.limited));
 renderCart();
+
+// Load products from the backend (if configured). Falls back to the
+// hardcoded catalog when the backend is unavailable or has no products yet.
+function normalizeBackendProduct(p){
+  p.sizes = Array.isArray(p.sizes) ? p.sizes : (typeof p.sizes==="string" ? p.sizes.split(",").map(s=>s.trim()).filter(Boolean) : ["S","M","L","XL"]);
+  p.price = Number(p.price)||0;
+  p.rating = Number(p.rating)||5;
+  p.stock = Number(p.stock)||0;
+  p.delivery = p.delivery || "2–4 days";
+  p.meta = p.meta || (p.club ? p.club+" Collection" : "");
+  p.mark = p.mark || "";
+  p.bestseller = !!p.bestseller;
+  p.limited = !!p.limited;
+  if(typeof p.sizeStock==="string"){ try{ p.sizeStock = JSON.parse(p.sizeStock); }catch(e){ p.sizeStock = {}; } }
+  return p;
+}
+async function loadProducts(){
+  if(!BACKEND_URL) return;
+  try{
+    const r = await fetch(BACKEND_URL,{method:"POST",mode:"cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"getProducts"})});
+    const d = await r.json();
+    if(d && Array.isArray(d.products) && d.products.length){
+      products.length = 0;
+      d.products.forEach(p=>products.push(normalizeBackendProduct(p)));
+      renderProducts();
+      renderGrid(document.getElementById("bestSellers"), products.filter(p=>p.bestseller));
+      renderGrid(document.getElementById("newDrop"), products.filter(p=>p.limited));
+    }
+  }catch(e){ /* keep hardcoded catalog */ }
+}
+loadProducts();

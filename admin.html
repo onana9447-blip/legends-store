@@ -47,6 +47,12 @@
     .pill.Shipped{background:#102a3a;color:#5ad}
     .pill.Delivered{background:#10301a;color:var(--ok)}
     .pill.Cancelled{background:#3a1010;color:var(--accent)}
+    .pill.ok{background:#10301a;color:var(--ok)}
+    .pill.out{background:#3a1010;color:var(--accent)}
+    .size-stock{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:6px}
+    .ss-row{display:flex;flex-direction:column;gap:4px;background:#0e1014;border:1px solid var(--line);border-radius:8px;padding:8px}
+    .ss-chk{display:flex;align-items:center;gap:6px;font-size:13px;text-transform:none;letter-spacing:0;color:var(--text);margin:0}
+    .ss-row input[type=number]{padding:6px 8px}
     .btn-danger{background:transparent;color:var(--accent);border:1px solid var(--accent)}
     .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
     .btn-dark{background:var(--accent);color:#fff}
@@ -116,28 +122,23 @@
   <div class="modal-bg" id="prodModal">
     <div class="modal-card">
       <button class="btn-ghost" style="float:right" id="prodClose">Fermer</button>
-      <h2 style="font-family:Oswald">Product</h2>
+      <h2 style="font-family:Oswald">+ ADD PRODUCT</h2>
       <form id="prodForm" class="form-grid">
         <input type="hidden" name="id">
-        <div class="full"><label>Name<input name="name" required></label></div>
-        <div><label>Meta<input name="meta"></label></div>
-        <div><label>Category<input name="category" placeholder="club/classic/player"></label></div>
+        <div class="full"><label>Product Name<input name="name" required></label></div>
+        <div><label>Club<input name="club" placeholder="Arsenal"></label></div>
+        <div><label>Season<input name="season" placeholder="2026"></label></div>
+        <div><label>Category<input name="category" placeholder="club / classic / player"></label></div>
         <div><label>Price (MAD)<input name="price" type="number"></label></div>
-        <div><label>Old price<input name="oldPrice" type="number"></label></div>
-        <div><label>Stock<input name="stock" type="number"></label></div>
-        <div><label>Rating<input name="rating" type="number" value="5"></label></div>
-        <div><label>Sizes (comma)<input name="sizes" placeholder="S,M,L,XL"></label></div>
-        <div><label>Club<input name="club"></label></div>
-        <div><label>Season<input name="season"></label></div>
-        <div><label>Image URL<input name="image"></label></div>
-        <div><label>Supplier cost<input name="cost" type="number"></label></div>
-        <div><label>Delivery cost<input name="deliveryCost" type="number"></label></div>
-        <div><label>Ads cost<input name="adsCost" type="number"></label></div>
+        <div><label>Old Price<input name="oldPrice" type="number"></label></div>
+        <div><label>Cost Price<input name="cost" type="number"></label></div>
+        <div class="full">
+          <label>Sizes &amp; Stock <small style="color:var(--muted);text-transform:none;letter-spacing:0">— check a size and set its stock (0 = sold out)</small></label>
+          <div id="sizeStockWrap" class="size-stock"></div>
+        </div>
+        <div class="full"><label>Image URL<input name="image" placeholder="https://… or image/xxx.jpeg"></label></div>
         <div class="full"><label>Description<textarea name="description" rows="2"></textarea></label></div>
-        <div class="full"><label>Material<textarea name="material" rows="2"></textarea></label></div>
-        <div><label><input type="checkbox" name="featured"> Featured</label></div>
-        <div><label><input type="checkbox" name="limited"> Limited / New drop</label></div>
-        <div class="full"><button class="btn-dark" type="submit">Save</button></div>
+        <div class="full"><button class="btn-dark" type="submit">SAVE PRODUCT</button></div>
       </form>
     </div>
   </div>
